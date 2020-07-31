@@ -8,6 +8,7 @@ import os
 import base64
 import sys
 import datetime
+from random import random
 from typing import Union
 
 import requests
@@ -63,7 +64,10 @@ def parse_lang_data(lang_data):
 		# following line provides a neat finish
 		fmt_percent = format(lang['percent'], '0.2f').zfill(5)
 		current_width = width * lang['percent'] / 100
-		color = lang_colors[lang['name']]['color']
+		try:
+			color = lang_colors[lang['name']]['color']
+		except KeyError:
+			color = random.choice(list(lang_colors.values()))['color']
 		x += current_width
 		lang_ent += html(
 				'rect',
