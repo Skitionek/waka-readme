@@ -69,12 +69,12 @@ def parse_lang_data(lang_data):
 		except KeyError:
 			color = random.choice(list(lang_colors.values()))['color']
 		x += current_width
-		lang_ent += html(
+		lang_ent.append(html(
 				'rect',
 				mask='url(#rect-mask)', dataTestid='lang-progress', x=x, y=0,
 				width=current_width, height=8, fill=color
-		)
-		lang_ent += html('g',
+		))
+		lang_ent.append(html('g',
 				transform=f'translate({150 * (index % 2)}, {25 * math.ceil(index / 2)})',
 				children=(
 					html('circle',
@@ -85,7 +85,7 @@ def parse_lang_data(lang_data):
 							children=f"{lang['name']} {lang['text']}({fmt_percent}%)"
 					)
 				)
-		)
+		))
 		if index == 5:
 			break
 	return lang_ent

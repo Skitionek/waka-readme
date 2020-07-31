@@ -13,7 +13,7 @@ class TestMain(unittest.TestCase):
         '''Tests the make_graph function'''
         with open('./tests/mock_data.json', 'r') as file:
             data = json.load(file)
-        get_stats(data)
+        print(get_stats(data))
 
 
 if __name__ == '__main__':
