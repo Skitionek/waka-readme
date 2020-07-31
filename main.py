@@ -3,6 +3,7 @@ WakaTime progress visualizer
 '''
 
 # region Imports
+import random
 import re
 import os
 import base64
