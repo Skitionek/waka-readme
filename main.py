@@ -12,7 +12,7 @@ from typing import Union
 
 import requests
 import math
-from github import Github, GithubException
+from github import Github, GithubException, UnknownObjectException
 
 # endregion
 
@@ -163,7 +163,11 @@ if __name__ == '__main__':
 				"which is automatically used by the action."
 		)
 		sys.exit(1)
-	contents = repo.get_contents(svg_path)
+	try:
+		contents = repo.get_contents(svg_path)
+	except UnknownObjectException:
+		contents = repo.create_file(svg_path)
+		
 	waka_stats = get_stats()
 	svg = decode_svg(contents.content)
 	new_svg = generate_new_svg(stats=waka_stats, svg=svg)
