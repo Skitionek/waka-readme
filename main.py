@@ -50,7 +50,7 @@ def this_week() -> str:
 
 def html(tag: str, children: Union[str, tuple] = tuple(), **kwargs) -> str:
 	args = ' '.join(
-			f"{to_kebab_case(key)}='{value}'" if key != 'className' else f"class='value'"
+			f"{to_kebab_case(key)}='{value}'" if key != 'className' else f"class='{value}'"
 				for key, value in kwargs.items()
 	)
 	rendered_children = children if isinstance(children, str) else '\n'.join(children)
@@ -68,7 +68,6 @@ def parse_lang_data(lang_data):
 			color = lang_colors[lang['name']]['color']
 		except KeyError:
 			color = random.choice(list(lang_colors.values()))['color']
-		x += current_width
 		lang_ent.append(html(
 				'rect',
 				mask='url(#rect-mask)', dataTestid='lang-progress', x=x, y=0,
@@ -86,6 +85,7 @@ def parse_lang_data(lang_data):
 					)
 				)
 		))
+		x += current_width
 		if index == 5:
 			break
 	return lang_ent
