@@ -74,15 +74,16 @@ def parse_lang_data(lang_data):
 				width=current_width, height=8, fill=color
 		))
 		lang_ent.append(html('g',
-				transform=f'translate({150 * (index % 2)}, {25 * math.ceil(index / 2)})',
+				transform=f'translate({150 * (index % 2)}, {25 * math.ceil((index+1) / 2)})',
 				children=(
 					html('circle',
 							cx=5, cy=6, r=5, fill=color
 					),
 					html('text',
 							dataTestid='lang-name', x=15, y=10, className='lang-name',
-							children=f"{lang['name']} {lang['text']}({fmt_percent}%)"
-					)
+							children=f"{lang['name']} {lang['text']}"
+					),
+					html('title', children=f"{fmt_percent}%")
 				)
 		))
 		x += current_width
