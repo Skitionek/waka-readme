@@ -191,4 +191,3 @@ if __name__ == '__main__':
 				content=new_svg,
 				branch='master'
 		)
-		contents = repo.create_file(svg_path)
