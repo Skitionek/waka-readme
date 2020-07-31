@@ -8,7 +8,6 @@ import os
 import base64
 import sys
 import datetime
-from collections import Iterable
 from typing import Union
 
 import requests
