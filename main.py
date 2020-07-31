@@ -3,12 +3,12 @@ WakaTime progress visualizer
 '''
 
 # region Imports
+import random
 import re
 import os
 import base64
 import sys
 import datetime
-from random import random
 from typing import Union
 
 import requests
