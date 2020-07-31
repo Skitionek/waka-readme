@@ -3,7 +3,7 @@ Tests for the main.py
 '''
 import json
 
-from main import get_stats
+from main import get_stats, generate_new_svg
 import unittest
 
 
@@ -13,7 +13,9 @@ class TestMain(unittest.TestCase):
         '''Tests the make_graph function'''
         with open('./tests/mock_data.json', 'r') as file:
             data = json.load(file)
-        print(get_stats(data))
+        s = get_stats(data)
+        print(s)
+        print(generate_new_svg(s))
 
 
 if __name__ == '__main__':

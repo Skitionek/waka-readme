@@ -3,7 +3,6 @@ WakaTime progress visualizer
 '''
 
 # region Imports
-import random
 import re
 import os
 import base64
@@ -145,7 +144,7 @@ def generate_new_svg(stats: str) -> str:
 							html('rect', x=0, y=0, width=300, height=8, fill="white", rx=5)
 						),
 						START_COMMENT,
-						*stats,
+						stats,
 						END_COMMENT
 					)),
 				)
@@ -185,7 +184,6 @@ if __name__ == '__main__':
 			)
 	except UnknownObjectException:
 		new_svg = generate_new_svg(stats=waka_stats)
-		print(new_svg)
 		repo.create_file(
 				path=svg_path,
 				message='Updated with Dev Metrics',
