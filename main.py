@@ -108,16 +108,12 @@ def decode_svg(data: str) -> str:
 	return str(decoded_bytes, 'utf-8')
 
 
-def generate_new_svg(stats: str, svg: str) -> str:
+def generate_new_svg(stats: str) -> str:
 	'''Generate a new svg'''
-	if len(svg):
-		stats_in_readme = f"{START_COMMENT}\n{stats}\n{END_COMMENT}"
-		return re.sub(listReg, stats_in_readme, svg)
-	else:
-		return html('svg', xmlns="http://www.w3.org/2000/svg", width=350, height=170, viewBox="0 0 350 170",
-				fill="none",
-				children=(
-					html('style', children="""
+	return html('svg', xmlns="http://www.w3.org/2000/svg", width=350, height=170, viewBox="0 0 350 170",
+			fill="none",
+			children=(
+				html('style', children="""
                     .header {
                         font: 600 18px 'Segoe UI', Ubuntu, Sans-Serif;
                         fill: #2f80ed;
@@ -128,28 +124,34 @@ def generate_new_svg(stats: str, svg: str) -> str:
                         fill: #333;
                     }
                 """),
-					html('rect',
-							dataTestid="card-bg", x=0.5, y=0.5, rx=4.5, height="99%", stroke="#E4E2E2", width=349,
-							fill="#fffefe", strokeOpacity=1
-					),
-					html('g', dataTestid="card-title", transform="translate(25, 35)", children= \
-						html('g', transform="translate(0, 0)", children= \
-							html('text', x=0, y=0, className="header", dataTestid="header",
-									children='Most Used Languages'
-							)
+				html('rect',
+						dataTestid="card-bg", x=0.5, y=0.5, rx=4.5, height="99%", stroke="#E4E2E2", width=349,
+						fill="#fffefe", strokeOpacity=1
+				),
+				html('g', dataTestid="card-title", transform="translate(25, 35)", children= \
+					html('g', transform="translate(0, 0)", children= \
+						html('text', x=0, y=0, className="header", dataTestid="header",
+								children='Most Used Languages'
 						)
-					),
-					html('g', dataTestid="main-card-body", transform="translate(0, 55)", children= \
-						html('svg', dataTestid="lang-items", x=25, children=(
-							html('mask', id="rect-mask", children= \
-								html('rect', x=0, y=0, width=300, height=8, fill="white", rx=5)
-							),
-							START_COMMENT,
-							*stats,
-							END_COMMENT
-						)),
 					)
-				))
+				),
+				html('g', dataTestid="main-card-body", transform="translate(0, 55)", children= \
+					html('svg', dataTestid="lang-items", x=25, children=(
+						html('mask', id="rect-mask", children= \
+							html('rect', x=0, y=0, width=300, height=8, fill="white", rx=5)
+						),
+						START_COMMENT,
+						*stats,
+						END_COMMENT
+					)),
+				)
+			))
+
+
+def substitute_svg_part(stats: str, svg: str) -> str:
+	'''Generate a new svg'''
+	stats_in_readme = f"{START_COMMENT}\n{stats}\n{END_COMMENT}"
+	return re.sub(listReg, stats_in_readme, svg)
 
 
 if __name__ == '__main__':
@@ -163,19 +165,26 @@ if __name__ == '__main__':
 				"which is automatically used by the action."
 		)
 		sys.exit(1)
+	
+	waka_stats = get_stats()
 	try:
 		contents = repo.get_contents(svg_path)
+		svg = decode_svg(contents.content)
+		new_svg = substitute_svg_part(stats=waka_stats, svg=svg)
+		if new_svg != svg:
+			repo.update_file(
+					path=contents.path,
+					message='Updated with Dev Metrics',
+					content=new_svg,
+					sha=contents.sha,
+					branch='master'
+			)
 	except UnknownObjectException:
-		contents = repo.create_file(svg_path)
-		
-	waka_stats = get_stats()
-	svg = decode_svg(contents.content)
-	new_svg = generate_new_svg(stats=waka_stats, svg=svg)
-	if new_svg != svg:
-		repo.update_file(
-				path=contents.path,
+		new_svg = generate_new_svg(stats=waka_stats)
+		repo.create_file(
+				path=svg_path,
 				message='Updated with Dev Metrics',
 				content=new_svg,
-				sha=contents.sha,
 				branch='master'
 		)
+		contents = repo.create_file(svg_path)
