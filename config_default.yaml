@@ -1,0 +1,20 @@
+title: ${INPUT_SHOW_TITLE:"Most Used Languages"}
+svg_path: ${INPUT_SVG_PATH:"waka_stats.svg"}
+colors_map_url: ${INPUT_COLORS_URL:"https://raw.githubusercontent.com/ozh/github-colors/master/colors.json"}
+magic_comments:
+  start: ${START_COMMENT:'<!--START_SECTION:waka-->'}
+  end: ${END_COMMENT:'<!--END_SECTION:waka-->'}
+github:
+  user: ${INPUT_USERNAME:?You need to provide an username}
+  token: ${INPUT_GITHUB_TOKEN:?GITHUB_TOKEN is a required parameter}
+waka:
+  key: ${INPUT_WAKATIME_API_KEY:?WAKATIME_API_KEY is a required parameter}
+  time_range: ${INPUT_WAKA_TIME_RANGE:"last_7_days"}
+style:
+  width: 350
+  height: 170
+  margin:
+    left: 25
+    right: 25
+    top: 25
+    bottom: 25

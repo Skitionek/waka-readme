@@ -2,114 +2,177 @@
 WakaTime progress visualizer
 '''
 
+# region Imports
 import re
 import os
 import base64
 import sys
 import datetime
+from collections import Iterable
+from typing import Union
+
 import requests
+import math
 from github import Github, GithubException
 
-START_COMMENT = '<!--START_SECTION:waka-->'
-END_COMMENT = '<!--END_SECTION:waka-->'
+# endregion
+
+START_COMMENT = os.getenv('INPUT_START_COMMENT', '<!--START_SECTION:waka-->')
+END_COMMENT = os.getenv('INPUT_END_COMMENT', '<!--END_SECTION:waka-->')
 listReg = f"{START_COMMENT}[\\s\\S]+{END_COMMENT}"
-width=300
 
 user = os.getenv('INPUT_USERNAME')
 waka_key = os.getenv('INPUT_WAKATIME_API_KEY')
 ghtoken = os.getenv('INPUT_GH_TOKEN')
 show_title = os.getenv("INPUT_SHOW_TITLE")
+width = os.getenv('INPUT_WIDTH', 300)
+height = os.getenv('INPUT_HEIGHT', 300)
+colors_map_url = os.getenv('INPUT_COLORS_URL', "https://raw.githubusercontent.com/ozh/github-colors/master/colors.json")
+svg_path = os.getenv('INPUT_SVG_PATH', 'waka_stats.svg')
+waka_time_range = os.getenv('INPUT_WAKA_TIME_RANGE', 'last_7_days')
 
-import urllib.request, json 
-lang_colors = requests.get(
-    "https://raw.githubusercontent.com/ozh/github-colors/master/colors.json").json()
-print(lang_colors)
+assert waka_time_range in ['last_7_days', 'last_30_days', 'last_6_months', 'last_year']
+
+lang_colors = requests.get(colors_map_url).json()
+
+
+def to_kebab_case(s: str) -> str:
+	return re.sub(r'(?<!^)(?=[A-Z])', '-', s).lower()
+
 
 def this_week() -> str:
-    '''Returns a week streak'''
-    week_end = datetime.datetime.today() - datetime.timedelta(days=1)
-    week_start = week_end - datetime.timedelta(days=7)
-    print("Week header created")
-    return f"Week: {week_start.strftime('%d %B, %Y')} - {week_end.strftime('%d %B, %Y')}"
+	'''Returns a week streak'''
+	week_end = datetime.datetime.today() - datetime.timedelta(days=1)
+	week_start = week_end - datetime.timedelta(days=7)
+	print("Week header created")
+	return f"Week: {week_start.strftime('%d %B, %Y')} - {week_end.strftime('%d %B, %Y')}"
 
 
-def make_graph(percent: float) -> str:
-    '''Make progress graph from API graph'''
-    done_block = '█'
-    empty_block = '░'
-    pc_rnd = round(percent)
-    return f"{done_block*int(pc_rnd/4)}{empty_block*int(25-int(pc_rnd/4))}"
+def html(tag: str, children: Union[str, tuple] = tuple(), **kwargs) -> str:
+	args = ' '.join(
+			f"{to_kebab_case(key)}='{value}'" if key != 'className' else f"class='value'"
+				for key, value in kwargs.items()
+	)
+	rendered_children = children if isinstance(children, str) else '\n'.join(children)
+	return f"<{tag} {args}>{rendered_children}</{tag}>"
 
 
-def get_stats() -> str:
-    '''Gets API data and returns markdown progress'''
-    data = requests.get(
-        f"https://wakatime.com/api/v1/users/current/stats/last_7_days?api_key={waka_key}").json()
-    try:
-        lang_data = data['data']['languages']
-    except KeyError:
-        print("Please Add your WakaTime API Key to the Repository Secrets")
-        sys.exit(1)
-        
-    text = ""
-
-    rect_list = []
-    data_list = []
-    x=0
-    try:
-        pad = len(max([l['name'] for l in lang_data[:5]], key=len))
-    except ValueError:
-        print("The Data seems to be empty. Please wait for a day for the data to be filled in.")
-        return '```text\nNo Activity tracked this Week\n```'
-    for index, lang in enumerate(lang_data[:5]):
-        lth = len(lang['name'])
-        ln_text = len(lang['text'])
-        # following line provides a neat finish
-        fmt_percent = format(lang['percent'], '0.2f').zfill(5)
-        current_width = width*lang['percent']/100
-        color = lang_colors[lang['text']]
-        x += current_width
-        text += f"<rect mask='url(#rect-mask)' data-testid='lang-progress' x='{x}' y='0' width='{current_width}' height='8' fill='{color}'/>"
-        text += f"<g transform='translate({150*(index%2)}, {25*ceil(index/2)})'>
-                <circle cx='5' cy='6' r='5' fill='{color}'/>
-                <text data-testid='lang-name' x='15' y='10' class='lang-name'>
-                    {lang['text']} {fmt_percent}%
-                </text>
-            </g>"
-            
-    
-    text += """</svg>
-        </g>
-    </svg>"""
-    
-    print(text)
-    
-    return text
+def parse_lang_data(lang_data):
+	lang_ent = []
+	x = 0
+	for index, lang in enumerate(lang_data):
+		# following line provides a neat finish
+		fmt_percent = format(lang['percent'], '0.2f').zfill(5)
+		current_width = width * lang['percent'] / 100
+		color = lang_colors[lang['name']]['color']
+		x += current_width
+		lang_ent += html(
+				'rect',
+				mask='url(#rect-mask)', dataTestid='lang-progress', x=x, y=0,
+				width=current_width, height=8, fill=color
+		)
+		lang_ent += html('g',
+				transform=f'translate({150 * (index % 2)}, {25 * math.ceil(index / 2)})',
+				children=(
+					html('circle',
+							cx=5, cy=6, r=5, fill=color
+					),
+					html('text',
+							dataTestid='lang-name', x=15, y=10, className='lang-name',
+							children=f"{lang['name']} {lang['text']}({fmt_percent}%)"
+					)
+				)
+		)
+		if index == 5:
+			break
+	return lang_ent
 
 
-def decode_readme(data: str) -> str:
-    '''Decode the contents of old readme'''
-    decoded_bytes = base64.b64decode(data)
-    return str(decoded_bytes, 'utf-8')
+def get_stats(data=requests.get(
+		f"https://wakatime.com/api/v1/users/current/stats/{waka_time_range}?api_key={waka_key}").json()) -> str:
+	'''Gets API data and returns markdown progress'''
+	
+	try:
+		lang_data = data['data']['languages']
+	except KeyError:
+		print("Please Add your WakaTime API Key to the Repository Secrets")
+		sys.exit(1)
+	
+	print(lang_data)
+	
+	return '\n'.join(parse_lang_data(lang_data))
 
 
-def generate_new_readme(stats: str, readme: str) -> str:
-    '''Generate a new Readme.md'''
-    stats_in_readme = f"{START_COMMENT}\n{stats}\n{END_COMMENT}"
-    return re.sub(listReg, stats_in_readme, readme)
+def decode_svg(data: str) -> str:
+	'''Decode the contents of old readme'''
+	decoded_bytes = base64.b64decode(data)
+	return str(decoded_bytes, 'utf-8')
+
+
+def generate_new_svg(stats: str, svg: str) -> str:
+	'''Generate a new svg'''
+	if len(svg):
+		stats_in_readme = f"{START_COMMENT}\n{stats}\n{END_COMMENT}"
+		return re.sub(listReg, stats_in_readme, svg)
+	else:
+		return html('svg', xmlns="http://www.w3.org/2000/svg", width=350, height=170, viewBox="0 0 350 170",
+				fill="none",
+				children=(
+					html('style', children="""
+                    .header {
+                        font: 600 18px 'Segoe UI', Ubuntu, Sans-Serif;
+                        fill: #2f80ed;
+                        animation: fadeInAnimation 0.8s ease-in-out forwards;
+                    }
+                    .lang-name {
+                        font: 400 11px 'Segoe UI', Ubuntu, Sans-Serif;
+                        fill: #333;
+                    }
+                """),
+					html('rect',
+							dataTestid="card-bg", x=0.5, y=0.5, rx=4.5, height="99%", stroke="#E4E2E2", width=349,
+							fill="#fffefe", strokeOpacity=1
+					),
+					html('g', dataTestid="card-title", transform="translate(25, 35)", children= \
+						html('g', transform="translate(0, 0)", children= \
+							html('text', x=0, y=0, className="header", dataTestid="header",
+									children='Most Used Languages'
+							)
+						)
+					),
+					html('g', dataTestid="main-card-body", transform="translate(0, 55)", children= \
+						html('svg', dataTestid="lang-items", x=25, children=(
+							html('mask', id="rect-mask", children= \
+								html('rect', x=0, y=0, width=300, height=8, fill="white", rx=5)
+							),
+							START_COMMENT,
+							*stats,
+							END_COMMENT
+						)),
+					)
+				))
 
 
 if __name__ == '__main__':
-    g = Github(ghtoken)
-    try:
-        repo = g.get_repo(f"{user}/{user}")
-    except GithubException:
-        print("Authentication Error. Try saving a GitHub Token in your Repo Secrets or Use the GitHub Actions Token, which is automatically used by the action.")
-        sys.exit(1)
-    contents = repo.get_contents('waka_stats.svg')
-    waka_stats = get_stats()
-    rdmd = decode_readme(contents.content)
-    new_readme = generate_new_readme(stats=waka_stats, readme=rdmd)
-    if new_readme != rdmd:
-        repo.update_file(path=contents.path, message='Updated with Dev Metrics',
-                         content=new_readme, sha=contents.sha, branch='master')
+	g = Github(ghtoken)
+	try:
+		repo = g.get_repo(f"{user}/{user}")
+	except GithubException:
+		print(
+				"Authentication Error. Try saving a GitHub Token in your Repo Secrets or Use the GitHub Actions "
+				"Token, "
+				"which is automatically used by the action."
+		)
+		sys.exit(1)
+	contents = repo.get_contents(svg_path)
+	waka_stats = get_stats()
+	svg = decode_svg(contents.content)
+	new_svg = generate_new_svg(stats=waka_stats, svg=svg)
+	if new_svg != svg:
+		repo.update_file(
+				path=contents.path,
+				message='Updated with Dev Metrics',
+				content=new_svg,
+				sha=contents.sha,
+				branch='master'
+		)

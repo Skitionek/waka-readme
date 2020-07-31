@@ -1,0 +1,53 @@
+{
+  "data": {
+	"best_day"                                             : null,
+	"categories"                                           : [ ],
+	"created_at"                                           : "2020-03-12T23:00:39Z",
+	"daily_average"                                        : 0,
+	"daily_average_including_other_language"               : 0,
+	"days_including_holidays"                              : 7,
+	"days_minus_holidays"                                  : 7,
+	"dependencies"                                         : [ ],
+	"editors"                                              : [ ],
+	"end"                                                  : "2020-07-30T21:59:59Z",
+	"holidays"                                             : 0,
+	"human_readable_daily_average"                         : "0 secs",
+	"human_readable_daily_average_including_other_language": "0 secs",
+	"human_readable_total"                                 : "0 secs",
+	"human_readable_total_including_other_language"        : "0 secs",
+	"id"                                                   : "c3685d9c-e865-4f57-8a3f-fca0d1db5ab1",
+	"is_already_updating"                                  : false,
+	"is_coding_activity_visible"                           : false,
+	"is_including_today"                                   : false,
+	"is_other_usage_visible"                               : false,
+	"is_stuck"                                             : false,
+	"is_up_to_date"                                        : true,
+	"languages"                                            : [
+	  {
+		"name"      : "Python",
+		"text"      : "1h",
+		"percent": 50
+	  },
+	  {
+		"name"      : "JavaScript",
+		"text"      : "1h",
+		"percent": 50
+	  }
+	],
+	"machines"                                             : [ ],
+	"modified_at"                                          : "2020-07-31T01:08:54Z",
+	"operating_systems"                                    : [ ],
+	"project"                                              : null,
+	"projects"                                             : [ ],
+	"range"                                                : "last_7_days",
+	"start"                                                : "2020-07-23T22:00:00Z",
+	"status"                                               : "ok",
+	"timeout"                                              : 15,
+	"timezone"                                             : "Europe/Copenhagen",
+	"total_seconds"                                        : 0.000000,
+	"total_seconds_including_other_language"               : 0.000000,
+	"user_id"                                              : "26161014-caaa-405e-86cb-efcd2ca9553e",
+	"username"                                             : null,
+	"writes_only"                                          : false
+  }
+}

@@ -8,6 +8,8 @@ verify_ssl = true
 [packages]
 requests = "*"
 pygithub = "*"
+github = "*"
+confuse = "*"
 
 [requires]
 python_version = "3.7"
