@@ -145,7 +145,7 @@ def generate_new_svg(stats: str) -> str:
 							html('rect', x=0, y=0, width=300, height=8, fill="white", rx=5)
 						),
 						START_COMMENT,
-						stats,
+						*stats,
 						END_COMMENT
 					)),
 				)
