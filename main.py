@@ -13,12 +13,17 @@ from github import Github, GithubException
 START_COMMENT = '<!--START_SECTION:waka-->'
 END_COMMENT = '<!--END_SECTION:waka-->'
 listReg = f"{START_COMMENT}[\\s\\S]+{END_COMMENT}"
+width=300
 
 user = os.getenv('INPUT_USERNAME')
 waka_key = os.getenv('INPUT_WAKATIME_API_KEY')
 ghtoken = os.getenv('INPUT_GH_TOKEN')
 show_title = os.getenv("INPUT_SHOW_TITLE")
 
+import urllib.request, json 
+lang_colors = requests.get(
+    "https://raw.githubusercontent.com/ozh/github-colors/master/colors.json").json()
+print(lang_colors)
 
 def this_week() -> str:
     '''Returns a week streak'''
@@ -45,28 +50,41 @@ def get_stats() -> str:
     except KeyError:
         print("Please Add your WakaTime API Key to the Repository Secrets")
         sys.exit(1)
+        
+    text = ""
 
+    rect_list = []
     data_list = []
+    x=0
     try:
         pad = len(max([l['name'] for l in lang_data[:5]], key=len))
     except ValueError:
         print("The Data seems to be empty. Please wait for a day for the data to be filled in.")
         return '```text\nNo Activity tracked this Week\n```'
-    for lang in lang_data[:5]:
+    for index, lang in enumerate(lang_data[:5]):
         lth = len(lang['name'])
         ln_text = len(lang['text'])
         # following line provides a neat finish
         fmt_percent = format(lang['percent'], '0.2f').zfill(5)
-        data_list.append(
-            f"{lang['name']}{' '*(pad + 3 - lth)}{lang['text']}{' '*(16 - ln_text)}{make_graph(lang['percent'])}   {fmt_percent} %")
-    print("Graph Generated")
-    data = ' \n'.join(data_list)
-    if show_title == 'true':
-        print("Stats with Weeks in Title Generated")
-        return '```text\n'+this_week()+'\n\n'+data+'\n```'
-    else:
-        print("Usual Stats Generated")
-        return '```text\n'+data+'\n```'
+        current_width = width*lang['percent']/100
+        color = lang_colors[lang['text']]
+        x += current_width
+        text += f"<rect mask='url(#rect-mask)' data-testid='lang-progress' x='{x}' y='0' width='{current_width}' height='8' fill='{color}'/>"
+        text += f"<g transform='translate({150*(index%2)}, {25*ceil(index/2)})'>
+                <circle cx='5' cy='6' r='5' fill='{color}'/>
+                <text data-testid='lang-name' x='15' y='10' class='lang-name'>
+                    {lang['text']} {fmt_percent}%
+                </text>
+            </g>"
+            
+    
+    text += """</svg>
+        </g>
+    </svg>"""
+    
+    print(text)
+    
+    return text
 
 
 def decode_readme(data: str) -> str:
@@ -88,7 +106,7 @@ if __name__ == '__main__':
     except GithubException:
         print("Authentication Error. Try saving a GitHub Token in your Repo Secrets or Use the GitHub Actions Token, which is automatically used by the action.")
         sys.exit(1)
-    contents = repo.get_readme()
+    contents = repo.get_contents('waka_stats.svg')
     waka_stats = get_stats()
     rdmd = decode_readme(contents.content)
     new_readme = generate_new_readme(stats=waka_stats, readme=rdmd)
