@@ -136,7 +136,7 @@ def generate_new_svg(stats: str) -> str:
 				html('g', dataTestid="card-title", transform="translate(25, 35)", children= \
 					html('g', transform="translate(0, 0)", children= \
 						html('text', x=0, y=0, className="header", dataTestid="header",
-								children='Most Used Languages'
+								children='Languages used in last week'
 						)
 					)
 				),
